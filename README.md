@@ -2,18 +2,19 @@
 
 ## Project Overview
 
-This project completes the Module 1 exploratory data analysis workflow for an automobile insurance dataset containing 678,013 policy records.
+This project completes the Module 1 exploratory data analysis and production outlier-filtering workflow for the French Motor Third Party Liability Claims dataset from OpenML. The dataset contains 678,013 policy records and 12 variables.
 
 The project includes:
 
-* Programmatic data collection
-* Data quality auditing
-* A business data dictionary
-* Skewness analysis
-* Correlation analysis
-* Distribution and outlier visualization
-* Tukey IQR and Z-score outlier comparison
-* A reusable production outlier-filtering script
+- Programmatic data collection
+- Raw boundary and missing-value audits
+- A Business Data Dictionary
+- Skewness and domain-based transformation analysis
+- Pearson correlation analysis
+- Distribution and outlier visualizations
+- Tukey IQR and Z-score comparison
+- A reusable production outlier-filtering script
+- A compiled final PDF report
 
 ## Project Structure
 
@@ -22,6 +23,7 @@ msba265_module1/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
+├── Module1_Homework_Report.pdf
 ├── data/
 │   ├── download_data.py
 │   ├── raw_business_data.csv
@@ -38,21 +40,24 @@ msba265_module1/
         └── outlier_filtering_comparison.png
 ```
 
-The raw and cleaned CSV files are generated locally and excluded from Git through `.gitignore`.
+## Reproduction Instructions
 
-## Environment Setup
+The following instructions are written for Visual Studio Code on Windows. Run all commands from the project root directory.
 
-This project was developed in Visual Studio Code on Windows using Python and a virtual environment.
+### 1. Clone the GitHub repository
 
-### 1. Create the virtual environment
+```cmd
+git clone https://github.com/MinYang5859/msba265_module1_Min.git
+cd msba265_module1_Min
+```
 
-Open the VS Code Terminal in the project root directory and run:
+### 2. Create a virtual environment
 
 ```cmd
 python -m venv venv
 ```
 
-### 2. Activate the virtual environment
+### 3. Activate the virtual environment
 
 For Windows Command Prompt:
 
@@ -66,37 +71,40 @@ For Windows PowerShell:
 .\venv\Scripts\Activate.ps1
 ```
 
-### 3. Install the required packages
+### 4. Install the required packages
 
 ```cmd
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-## How to Run the Project
-
-All commands should be executed from the project root directory.
-
-### Step 1: Download the raw dataset
+### 5. Download the raw dataset
 
 ```cmd
-python data/download_data.py
+python data\download_data.py
 ```
 
-This command creates:
+Expected output:
 
 ```text
 data/raw_business_data.csv
+678,013 rows x 12 columns
 ```
 
-### Step 2: Run the Jupyter Notebook
+### 6. Run the Jupyter Notebook
 
-Open the following file in VS Code:
+Open the following file in Visual Studio Code:
 
 ```text
 notebooks/01_eda_and_data_dictionary.ipynb
 ```
 
-Select the correct Python kernel and choose:
+Select the Python interpreter from the project virtual environment:
+
+```text
+venv\Scripts\python.exe
+```
+
+Then select:
 
 ```text
 Restart Kernel and Run All Cells
@@ -111,64 +119,66 @@ reports/figures/feature_distributions.png
 reports/figures/outlier_filtering_comparison.png
 ```
 
-### Step 3: Run the production outlier-filtering script
+### 7. Run the production outlier-filtering script
 
 ```cmd
-python src/clean_outliers.py
+python src\clean_outliers.py
 ```
 
-This command creates:
+Expected results:
+
+```text
+Initial records: 678,013
+Tukey IQR valid range: -2,257 to 4,007
+Removed records: 77,566
+Final cleaned records: 600,447
+```
+
+The script generates:
 
 ```text
 data/cleaned_business_data.csv
 ```
 
+### 8. Open the final report
+
+The compiled assignment report is available in the repository root:
+
+```text
+Module1_Homework_Report.pdf
+```
+
 ## Main Findings
 
-The dataset contains 678,013 policy records and 12 variables.
+- All 12 variables contain 678,013 non-null observations.
+- `DrivAge` ranges from 18 to 100 with no negative-age records.
+- `Exposure` ranges from 0.002732 to 2.01 with no zero or negative values.
+- `BonusMalus` ranges from 50 to 230.
+- Common numeric sentinel codes were not detected in the audited variables.
+- `ClaimNb` has a skewness coefficient of approximately 5.60, and 94.98% of records contain zero claims.
+- `ClaimNb` remains in raw count units because `log(0)` is undefined and count-based models better preserve its business meaning.
+- No numerical feature pair reaches the severe Pearson correlation threshold of `|r| ≥ 0.85`.
+- `Density` is strongly right-skewed, with a median of 393 and a maximum of 27,000.
+- Tukey filtering flags 77,566 `Density` records, while the Z-score method flags 15,209.
+- Statistical outliers should not be treated automatically as data errors because high-density observations may represent valid urban policyholders.
 
-The data quality audit found no standard null values. However, variable definitions and numerical ranges were also reviewed because non-null values can still contain invalid or sentinel values.
+## Reproducible Artifacts
 
-The correlation audit did not identify any severe pairwise correlation at the selected threshold of absolute Pearson correlation greater than or equal to 0.85.
+| Artifact | Location |
+|---|---|
+| Raw dataset | `data/raw_business_data.csv` |
+| Cleaned dataset | `data/cleaned_business_data.csv` |
+| Business Data Dictionary | `reports/data_dictionary.csv` |
+| Correlation heatmap | `reports/figures/correlation_heatmap.png` |
+| Distribution charts | `reports/figures/feature_distributions.png` |
+| Outlier comparison | `reports/figures/outlier_filtering_comparison.png` |
+| Final report | `Module1_Homework_Report.pdf` |
 
-The `Density` feature is strongly right-skewed. Its observed statistics are:
+## Peer Replication
 
-```text
-Q1: 92
-Median: 393
-Q3: 1,658
-Mean: 1,792.42
-Standard deviation: 3,958.65
-Maximum: 27,000
-```
-
-The Tukey IQR valid range for `Density` is:
-
-```text
--2,257 to 4,007 people per square kilometer
-```
-
-The comparison produced the following results:
-
-```text
-Tukey IQR records flagged: 77,566 (11.44%)
-Z-score records flagged:   15,209 (2.24%)
-```
-
-The difference occurs because the extreme right tail increases the mean and standard deviation, making the Z-score method less sensitive to high-density observations.
-
-Statistical outliers are not automatically data errors. High-density observations may represent valid urban policyholders. Removing all of them could introduce geographic selection bias. A `log1p(Density)` transformation should therefore be considered when the modeling objective requires retaining valid urban records.
-
-## Reproducibility
-
-The project uses:
-
-* `requirements.txt` to record package dependencies
-* `.gitignore` to exclude the virtual environment, checkpoints, and generated datasets
-* Python scripts to reproduce data collection and filtering
-* A Jupyter Notebook to reproduce the exploratory analysis and visual outputs
+Before final submission, a classmate will clone this public repository and follow the instructions above without additional assistance. A peer replication statement will be added to the repository after the reproduction test is completed.
 
 ## Author
 
-Min Yang
+Min Yang  
 MSBA 265 – Special Analytics Topics
